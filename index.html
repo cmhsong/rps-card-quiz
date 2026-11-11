@@ -203,6 +203,22 @@ textarea{resize:vertical}
 .icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:.45rem;width:2.4rem;height:2.4rem;cursor:pointer}
 @media (max-width:640px){.qrow{grid-template-columns:2rem minmax(0,1fr)} .qrow .a,.qrow .acts{grid-column:2}}
 
+/* 저장·불러오기 */
+.sets{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem}
+.sets li{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;padding:.55rem .75rem;border:1px solid var(--line);border-radius:.55rem;background:var(--paper)}
+.sets li .nm{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.sets li .meta{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.sets li .acts{margin-left:auto;display:flex;gap:.35rem;flex-wrap:wrap}
+.sets li .btn{padding:.35rem .75rem;font-size:.875rem}
+.sets li.cur{border-color:var(--felt);box-shadow:0 0 0 2px rgba(30,90,75,.18)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:.5rem;overflow:hidden}
+.seg label{padding:.35rem .8rem;cursor:pointer;font-size:.875rem}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--felt);color:#fff}
+.seg label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:-3px}
+.cur-set{font-size:.875rem;color:var(--muted)}
+.cur-set b{color:var(--ink)}
+
 /* 출력 */
 .sheet{background:#fff;color:#111;border-radius:.5rem;padding:2rem;box-shadow:0 1px 4px rgba(0,0,0,.15);overflow-x:auto}
 .sheet h2{font-family:var(--display);font-size:1.7rem;margin-bottom:.25rem}
@@ -341,6 +357,32 @@ textarea{resize:vertical}
 <section class="panel" id="tab-edit" hidden>
   <div class="box" style="display:flex;flex-direction:column;gap:1rem">
     <div class="row" style="justify-content:space-between">
+      <h2>문제 저장·불러오기</h2>
+      <span class="cur-set" id="curSet"></span>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <label class="field" style="flex:1 1 14rem"><span>문제 세트 이름</span>
+        <input type="text" id="setName" placeholder="예: 3학년 2반 사회 3단원"></label>
+      <button type="button" class="btn primary" id="saveSet">이 브라우저에 저장</button>
+    </div>
+    <div class="row">
+      <span class="small muted">불러올 때</span>
+      <div class="seg" role="radiogroup" aria-label="불러오는 방법">
+        <label><input type="radio" name="loadMode" id="lmReplace" value="replace" checked>현재 문제와 바꾸기</label>
+        <label><input type="radio" name="loadMode" id="lmAppend" value="append">뒤에 추가</label>
+      </div>
+    </div>
+    <ul class="sets" id="sets"></ul>
+    <div class="row" style="border-top:1px solid var(--line);padding-top:1rem">
+      <span class="small muted" style="width:100%">파일로 저장하면 USB나 메일로 옮겨 다른 컴퓨터에서 불러올 수 있습니다. CSV는 엑셀에서 열고 고칠 수 있습니다.</span>
+      <button type="button" class="btn" id="saveJson">파일로 저장 (.json)</button>
+      <button type="button" class="btn" id="saveCsv">엑셀용 저장 (.csv)</button>
+      <button type="button" class="btn primary" id="openFile">파일 불러오기</button>
+      <input type="file" id="fileIn" accept=".json,.csv,.txt,.tsv,application/json,text/csv,text/plain" hidden>
+    </div>
+  </div>
+  <div class="box" style="display:flex;flex-direction:column;gap:1rem">
+    <div class="row" style="justify-content:space-between">
       <h2>문제 은행 <span class="muted" style="font-size:1rem">(<span id="bankSize2">0</span>문항 · 자동 저장)</span></h2>
       <div class="row">
         <button type="button" class="btn primary" id="addQ">+ 문제 추가</button>
@@ -454,13 +496,13 @@ const S={
   order:null, needDeal:false, dealing:false,
   deck:[], scores:[], turn:0, open:null, timerId:null
 };
-const saveBank=()=>{store.set('bank',S.bank);refreshCounts()};
+const saveBank=()=>{store.set('bank',S.bank);refreshCounts();if(typeof showCurSet==='function'&&S.sets)showCurSet()};
 
 /* ---------- 탭 ---------- */
 function tab(name){
   document.querySelectorAll('nav.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===name));
   document.querySelectorAll('section.panel').forEach(p=>p.hidden=p.id!=='tab-'+name);
-  if(name==='edit')renderEditor();
+  if(name==='edit'){renderEditor();renderSets()}
   if(name==='print')renderSheet();
   if(name==='game'&&!S.deck.length)startGame(S.names.map((_,i)=>i));
   if(name==='game'&&S.needDeal)requestAnimationFrame(dealAnim);
@@ -734,6 +776,107 @@ function copy(text){
   const fallback=()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('복사했어요')}catch(e){toast('복사하지 못했어요. 직접 선택해 복사하세요.')}ta.remove()};
   if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('복사했어요'),fallback);else fallback();
 }
+
+/* ---------- 문제 저장·불러오기 ---------- */
+S.sets=store.get('sets',[]);if(!Array.isArray(S.sets))S.sets=[];
+S.setName=store.get('setName','');
+const clean=arr=>arr.map(x=>({q:String(x.q??'').trim(),a:String(x.a??'').trim()})).filter(x=>x.q);
+const fmtDate=t=>{const d=new Date(t);const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}.${z(d.getMonth()+1)}.${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`};
+function showCurSet(){
+  $('#curSet').innerHTML=S.setName?`지금 문제: <b>${esc(S.setName)}</b> · ${S.bank.length}문항`:`지금 문제: ${S.bank.length}문항 (이름 없음)`;
+  if(S.setName&&!$('#setName').value)$('#setName').value=S.setName;
+}
+function setCurrentName(nm){S.setName=nm||'';store.set('setName',S.setName);if(nm){$('#pTitle').value=nm;$('#setName').value=nm}showCurSet()}
+function applyLoaded(items,name){
+  items=clean(items);
+  if(!items.length){toast('불러올 문제가 없어요. 파일 내용을 확인하세요.');return false}
+  const append=$('#lmAppend').checked;
+  if(append)S.bank.push(...items);else S.bank=items;
+  S.deck=[];saveBank();renderEditor();
+  if(!append)setCurrentName(name);else showCurSet();
+  toast(append?`${items.length}문제를 뒤에 추가했어요`:`‘${name||'문제'}’ ${items.length}문제를 불러왔어요`);
+  return true;
+}
+function renderSets(){
+  showCurSet();
+  const L=$('#sets');
+  if(!S.sets.length){L.innerHTML='<li class="small muted" style="background:none;border-style:dashed">저장한 문제 세트가 없습니다. 이름을 적고 ‘이 브라우저에 저장’을 누르세요.</li>';return}
+  L.innerHTML=S.sets.map((x,i)=>`<li class="${x.name===S.setName?'cur':''}" data-i="${i}">
+    <span class="nm">${esc(x.name)}</span><span class="meta">${x.items.length}문항 · ${fmtDate(x.savedAt)}</span>
+    <span class="acts"><button type="button" class="btn primary" data-act="load">불러오기</button>
+    <button type="button" class="btn" data-act="file">파일로</button>
+    <button type="button" class="btn" data-act="del">삭제</button></span></li>`).join('');
+  L.querySelectorAll('li[data-i]').forEach(li=>{
+    const i=+li.dataset.i,x=S.sets[i];
+    li.querySelector('[data-act=load]').onclick=()=>{if(applyLoaded(x.items.map(o=>({...o})),x.name))renderSets()};
+    li.querySelector('[data-act=file]').onclick=()=>download(fileBase(x.name)+'.json',JSON.stringify({title:x.name,questions:x.items},null,2),'application/json');
+    const del=li.querySelector('[data-act=del]');
+    del.onclick=()=>{if(!del.classList.contains('danger-armed')){del.classList.add('danger-armed');del.textContent='정말 삭제?';setTimeout(()=>{del.classList.remove('danger-armed');del.textContent='삭제'},2500);return}
+      S.sets.splice(i,1);store.set('sets',S.sets);renderSets();toast(`‘${x.name}’을(를) 삭제했어요`)};
+  });
+}
+$('#saveSet').onclick=()=>{
+  const name=$('#setName').value.trim();
+  if(!name){toast('문제 세트 이름을 먼저 적어 주세요.');$('#setName').focus();return}
+  const items=clean(S.bank);
+  if(!items.length){toast('저장할 문제가 없어요.');return}
+  const k=S.sets.findIndex(x=>x.name===name);
+  const rec={name,items,savedAt:Date.now()};
+  if(k>=0)S.sets[k]=rec;else S.sets.unshift(rec);
+  store.set('sets',S.sets);
+  try{if(JSON.stringify(store.get('sets',[]))!==JSON.stringify(S.sets))throw 0}catch(e){toast('브라우저 저장 공간에 저장하지 못했어요. ‘파일로 저장’을 쓰세요.');return}
+  setCurrentName(name);renderSets();
+  toast(k>=0?`‘${name}’에 덮어 저장했어요`:`‘${name}’ ${items.length}문항을 저장했어요`);
+};
+const fileBase=n=>(n||'카드퀴즈_문제').replace(/[\\/:*?"<>|]+/g,'_').trim().slice(0,60)||'카드퀴즈_문제';
+function download(filename,text,type){
+  const blob=new Blob([text],{type:type+';charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);toast(filename+' 파일로 저장했어요');
+}
+const curName=()=>$('#setName').value.trim()||S.setName;
+$('#saveJson').onclick=()=>{const items=clean(S.bank);if(!items.length){toast('저장할 문제가 없어요.');return}
+  download(fileBase(curName())+'.json',JSON.stringify({title:curName()||'',questions:items},null,2),'application/json')};
+const csvCell=v=>/[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+$('#saveCsv').onclick=()=>{const items=clean(S.bank);if(!items.length){toast('저장할 문제가 없어요.');return}
+  download(fileBase(curName())+'.csv','﻿'+['문제,정답',...items.map(x=>csvCell(x.q)+','+csvCell(x.a))].join('\r\n'),'text/csv')};
+function parseDelimited(text){
+  text=text.replace(/^﻿/,'');
+  const first=text.split(/\r?\n/).find(l=>l.trim())||'';
+  const d=first.includes('\t')?'\t':first.includes('|')?'|':',';
+  if(d==='|')return text.split(/\r?\n/).map(l=>l.split('|')).filter(r=>r[0]&&r[0].trim()).map(r=>({q:r[0],a:r.slice(1).join('|')}));
+  const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cell+='"';i++}else q=false}else cell+=ch;continue}
+    if(ch==='"'&&cell==='')q=true;
+    else if(ch===d){row.push(cell);cell=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);rows.push(row);row=[];cell=''}
+    else cell+=ch;}
+  if(cell!==''||row.length){row.push(cell);rows.push(row)}
+  const out=rows.filter(r=>r[0]&&r[0].trim()).map(r=>({q:r[0],a:r[1]||''}));
+  if(out.length&&/^(문제|질문|question)$/i.test(out[0].q.trim()))out.shift();
+  return out;
+}
+$('#openFile').onclick=()=>{$('#fileIn').value='';$('#fileIn').click()};
+$('#fileIn').onchange=e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const text=String(rd.result||'');const base=f.name.replace(/\.[^.]+$/,'');
+    let items=null,name=base;
+    if(/\.json$/i.test(f.name)||/^\s*[\[{]/.test(text)){
+      try{const j=JSON.parse(text.replace(/^﻿/,''));
+        const arr=Array.isArray(j)?j:(j.questions||j.bank||j.items||[]);
+        items=arr.map(x=>Array.isArray(x)?{q:x[0],a:x[1]}:{q:x.q??x.question??x['문제'],a:x.a??x.answer??x['정답']});
+        if(j&&!Array.isArray(j)&&j.title)name=j.title;
+      }catch(err){toast('JSON 파일을 읽지 못했어요. 이 앱에서 저장한 파일인지 확인하세요.');return}
+    }else items=parseDelimited(text);
+    applyLoaded(items,name);renderSets();
+  };
+  rd.onerror=()=>toast('파일을 읽지 못했어요.');
+  rd.readAsText(f,'utf-8');
+};
 
 /* ---------- 5. 출력 ---------- */
 function printItems(){
