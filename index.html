@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>카드 뒤집기 퀴즈</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 레이아웃: 위쪽 도구 막대 + 단계 탭, 가운데 초록 펠트 게임판 위에 카드 */
 :root{
   --scale:1;
   --paper:#f2f5f1; --surface:#ffffff; --ink:#1c2925; --muted:#5d6d67; --line:#d3ddd7;
   --felt:#1e5a4b; --felt-2:#164537; --brass:#e3a23a; --brass-ink:#3b2a0b;
-  --card:#fffdf6; --card-ink:#1c2925; --good:#2c8a57; --bad:#c3463a; --focus:#2f6fd6;
+  --card:#fffdf6; --card-ink:#1c2925;
+  --back:#24345a; --back-2:#152039; --gold:#d6b160; --gold-soft:rgba(214,177,96,.45); --pat:rgba(214,177,96,.13); --num:#d6b160;
+  --ivory:#fbf7ec; --ivory-2:#efe7d2;
+  --numeral:"DM Serif Display",Georgia,"Times New Roman",serif; --good:#2c8a57; --bad:#c3463a; --focus:#2f6fd6;
   --display:"Jua","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
   --body:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
   color-scheme:light;
@@ -92,7 +95,7 @@ textarea{resize:vertical}
 .mems{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,6.5rem),1fr));gap:.4rem}
 .mems input{padding:.3rem .5rem;font-size:.9rem;background:var(--surface)}
 .score li .mb{display:block;font-size:.75rem;color:var(--muted)}
-.front .mb{font-size:.7rem;color:#5d6d67}
+.front .mb{font-size:.7rem;color:#5d6d67;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{flex:none;width:.85rem;height:.85rem;border-radius:50%}
 .check{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer}
 .check input{width:1.15rem;height:1.15rem;margin-top:.25rem;accent-color:var(--felt)}
@@ -112,25 +115,69 @@ textarea{resize:vertical}
 .turn-banner{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;margin-bottom:1rem}
 .turn-banner .who{font-family:var(--display);font-size:1.5rem}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(4.8rem,13vw,7.5rem),1fr));gap:.8rem}
-.card{position:relative;aspect-ratio:3/4;perspective:900px;border:0;padding:0;background:none;cursor:pointer;max-width:100%}
+.card{position:relative;aspect-ratio:5/7;perspective:1000px;border:0;padding:0;background:none;cursor:pointer;max-width:100%;border-radius:.7rem}
 .card:disabled{cursor:default}
-.ci{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.3,.7,.3,1.2);transform-style:preserve-3d}
+.ci{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.3,.7,.25,1.15);transform-style:preserve-3d}
 .card.up .ci{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;border-radius:.6rem;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;box-shadow:0 3px 0 rgba(0,0,0,.3)}
-.back{background:var(--card);padding:.35rem}
-.back::before{content:"";position:absolute;inset:.35rem;border-radius:.4rem;background:
-  repeating-linear-gradient(45deg,transparent 0 .45rem,rgba(227,162,58,.55) .45rem .55rem),
-  repeating-linear-gradient(-45deg,transparent 0 .45rem,rgba(227,162,58,.55) .45rem .55rem),var(--bad)}
-.back .no{position:relative;background:var(--card);color:var(--card-ink);font-family:var(--display);font-size:1.5rem;width:2.6rem;height:2.6rem;border-radius:50%;display:grid;place-items:center;font-variant-numeric:tabular-nums}
-.front{background:var(--card);color:var(--card-ink);transform:rotateY(180deg);padding:.4rem;text-align:center;font-size:.8rem}
-.front .mark{font-family:var(--display);font-size:2rem;line-height:1}
-.front.ok .mark{color:var(--good)} .front.no .mark{color:var(--bad)}
-.card:not(:disabled):hover .ci{transform:translateY(-.3rem)}
+.face{position:absolute;inset:0;border-radius:.7rem;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;
+  box-shadow:0 1px 1px rgba(0,0,0,.25),0 8px 16px -8px rgba(0,0,0,.55);transition:box-shadow .25s}
+/* 뒷면: 남색 바탕 + 금색 이중 테두리 + 잔무늬 + 다이아몬드 번호 */
+.back{background:radial-gradient(120% 90% at 30% 15%,var(--back) 0%,var(--back-2) 85%);border:1px solid rgba(0,0,0,.35)}
+.back::before{content:"";position:absolute;inset:6%;border-radius:.45rem;
+  border:1px solid var(--gold);
+  box-shadow:inset 0 0 0 3px var(--back-2),inset 0 0 0 4px var(--gold-soft);
+  background:
+    repeating-linear-gradient(60deg,var(--pat) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(-60deg,var(--pat) 0 1px,transparent 1px 8px)}
+.back::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.16) 48%,transparent 62%);transform:translateX(-120%);transition:transform .7s ease}
+.back .pip{position:absolute;color:var(--gold);font-size:.7rem;line-height:1;opacity:.85}
+.back .pip.tl{top:11%;left:13%} .back .pip.br{bottom:11%;right:13%;transform:rotate(180deg)}
+.back .no{position:relative;width:44%;aspect-ratio:1;display:grid;place-items:center}
+.back .no::before{content:"";position:absolute;inset:12%;transform:rotate(45deg);border:1.5px solid var(--gold);background:var(--back-2);border-radius:.2rem;box-shadow:0 0 0 3px var(--back-2),0 0 0 4px var(--gold-soft)}
+.back .no span{position:relative;font-family:var(--numeral);color:var(--num);font-size:clamp(1.15rem,2.4vw,1.7rem);line-height:1;font-variant-numeric:lining-nums tabular-nums}
+/* 앞면: 아이보리 + 모서리 번호 + 결과 배지 */
+.front{background:linear-gradient(160deg,var(--ivory) 0%,var(--ivory-2) 100%);color:var(--card-ink);transform:rotateY(180deg);padding:.5rem;text-align:center;font-size:.8rem;border:1px solid rgba(0,0,0,.12)}
+.front::before{content:"";position:absolute;inset:5%;border:1px solid rgba(28,41,37,.14);border-radius:.4rem;pointer-events:none}
+.front .idx{position:absolute;top:7%;left:9%;font-family:var(--numeral);font-size:1rem;line-height:1;color:#7d6a3e}
+.front .idx.br{top:auto;left:auto;bottom:7%;right:9%;transform:rotate(180deg)}
+.front .mark{width:2.5rem;height:2.5rem;border-radius:50%;display:grid;place-items:center;border:2px solid currentColor;font-size:1.25rem;font-weight:700;line-height:1;color:#9a8a63}
+.front .tag{font-size:.65rem;letter-spacing:.14em;font-weight:700;color:#9a8a63}
+.front.ok .mark,.front.ok .tag{color:var(--good)}
+.front.ok .mark{background:rgba(44,138,87,.08)}
+.front.no .mark,.front.no .tag{color:var(--bad)}
+.front.no .mark{background:rgba(195,70,58,.07)}
+.front .nm{font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card:not(:disabled):hover .ci{transform:translateY(-.35rem) rotate(-1deg)}
+.card:not(:disabled):hover .back{box-shadow:0 1px 1px rgba(0,0,0,.25),0 16px 24px -10px rgba(0,0,0,.6)}
+.card:not(:disabled):hover .back::after{transform:translateX(120%)}
 .card.up:not(:disabled):hover .ci{transform:rotateY(180deg)}
+
+/* 카드 디자인 6종 */
+[data-deck="classic"]{--back:#24345a;--back-2:#152039;--gold:#d6b160;--gold-soft:rgba(214,177,96,.45);--pat:rgba(214,177,96,.13);--num:#d6b160}
+[data-deck="burgundy"]{--back:#7d2534;--back-2:#4a111d;--gold:#e2c07a;--gold-soft:rgba(226,192,122,.45);--pat:rgba(226,192,122,.14);--num:#e2c07a}
+[data-deck="emerald"]{--back:#1f6a55;--back-2:#0e3a2f;--gold:#e6cf8f;--gold-soft:rgba(230,207,143,.45);--pat:rgba(230,207,143,.13);--num:#e6cf8f}
+[data-deck="charcoal"]{--back:#3a3d45;--back-2:#1b1c20;--gold:#c9cdd6;--gold-soft:rgba(201,205,214,.4);--pat:rgba(201,205,214,.10);--num:#e6e8ee}
+[data-deck="minimal"]{--back:#fdfcf9;--back-2:#f1eee6;--gold:#22252b;--gold-soft:rgba(34,37,43,.3);--pat:rgba(34,37,43,.07);--num:#22252b}
+[data-deck="hanji"]{--back:#f3e8cf;--back-2:#e3d3ae;--gold:#b33a2c;--gold-soft:rgba(179,58,44,.38);--pat:rgba(130,92,44,.10);--num:#fbf3e0}
+[data-deck="minimal"] .back{border-color:rgba(0,0,0,.18)}
+[data-deck="minimal"] .back::before{background:radial-gradient(var(--pat) 1px,transparent 1.4px) 0 0/7px 7px}
+[data-deck="minimal"] .back .no::before{background:var(--back)}
+[data-deck="hanji"] .back::before{background:
+    repeating-radial-gradient(circle at 50% 50%,transparent 0 6px,var(--pat) 6px 7px),
+    linear-gradient(var(--back),var(--back-2))}
+[data-deck="hanji"] .back .no::before{transform:none;border-radius:50%;background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 3px var(--back),0 0 0 4px var(--gold-soft)}
+[data-deck="hanji"] .back .pip{color:var(--gold)}
+.decks{display:grid;grid-template-columns:repeat(auto-fill,minmax(5rem,1fr));gap:.9rem}
+.deck-opt{border:0;background:none;padding:.2rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.4rem;font-size:.85rem;color:var(--muted);border-radius:.6rem}
+.deck-opt .mini{position:relative;width:100%;max-width:5.5rem;aspect-ratio:5/7}
+.deck-opt .mini .back .no span{font-size:1.05rem}
+.deck-opt[aria-pressed="true"]{color:var(--ink);font-weight:700}
+.deck-opt[aria-pressed="true"] .mini{outline:3px solid var(--brass);outline-offset:4px;border-radius:.7rem}
+.deck-opt:hover .back::after{transform:translateX(120%)}
 
 /* 문제 창 */
 .overlay{position:fixed;inset:0;background:rgba(8,20,16,.72);display:grid;place-items:center;z-index:20;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.qcard{background:var(--card);color:var(--card-ink);width:min(46rem,100%);max-height:100%;overflow:auto;border-radius:1rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;box-shadow:0 20px 60px rgba(0,0,0,.4);border:.5rem solid var(--bad);animation:pop .3s ease-out}
+.qcard{background:var(--card);color:var(--card-ink);width:min(46rem,100%);max-height:100%;overflow:auto;border-radius:1rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;background:linear-gradient(160deg,var(--ivory) 0%,var(--ivory-2) 100%);border:0;box-shadow:0 0 0 .5rem var(--back),0 0 0 calc(.5rem + 1px) var(--gold),0 0 0 calc(.5rem + 4px) var(--back-2),0 24px 60px rgba(0,0,0,.45);animation:pop .3s ease-out}
 @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
 .qcard .meta{display:flex;flex-wrap:wrap;gap:.5rem 1rem;justify-content:space-between;font-size:.9rem;color:#5d6d67}
 .qcard .meta b{color:var(--card-ink)}
@@ -252,6 +299,10 @@ textarea{resize:vertical}
       <label class="check"><input type="checkbox" id="optTimer"><span>제한 시간 <input type="number" id="timerSec" min="5" max="300" value="30" style="width:4.5rem;display:inline-block;padding:.15rem .4rem"> 초</span></label>
     </div>
   </div>
+  <div class="box" style="display:flex;flex-direction:column;gap:1rem">
+    <div class="row" style="justify-content:space-between"><h2>카드 디자인</h2><span class="small muted">골라 두면 게임판과 문제 창에 바로 적용됩니다</span></div>
+    <div class="decks" id="decks" role="group" aria-label="카드 디자인"></div>
+  </div>
   <div class="row">
     <button type="button" class="btn primary big" id="goDirect">카드 섞고 게임 시작 →</button>
     <span class="muted small">차례는 위에 적은 순서대로 돌아갑니다.</span>
@@ -282,6 +333,7 @@ textarea{resize:vertical}
   <div class="row">
     <button type="button" class="btn" id="redeal">카드 새로 섞기</button>
     <button type="button" class="btn" id="skipTurn">차례 넘기기</button>
+    <label class="row small" style="gap:.4rem;margin-left:auto" for="deckSel">카드 디자인 <select id="deckSel" style="width:auto"></select></label>
   </div>
 </section>
 
@@ -341,7 +393,7 @@ textarea{resize:vertical}
 
 <div class="overlay" id="overlay" hidden>
   <div class="qcard" role="dialog" aria-modal="true" aria-labelledby="qText">
-    <div class="meta"><span>카드 <b id="qNo">1</b>번</span><span>차례: <b id="qWho">-</b></span><span class="timer" id="qTimer" hidden></span></div>
+    <div class="meta"><span>카드 <b id="qNo" style="font-family:var(--numeral);font-weight:400;font-size:1.3em">1</b>번</span><span>차례: <b id="qWho">-</b></span><span class="timer" id="qTimer" hidden></span></div>
     <div class="qtext" id="qText"></div>
     <div class="ans" id="qAns" hidden></div>
     <div class="row">
@@ -515,49 +567,75 @@ function renderGame(){
   $('#left').textContent=S.deck.filter(c=>c.state==='down').length;
   $('#cards').innerHTML=S.deck.map((c,k)=>{
     const up=c.state!=='down';
-    const face=c.state==='right'?`<div class="face front ok"><div class="mark">○</div><div>${esc(S.names[c.by])}</div>${c.who?`<div class="mb">${esc(c.who)}</div>`:''}</div>`
-             :c.state==='wrong'?`<div class="face front no"><div class="mark">✕</div><div>${esc(S.names[c.by])}</div>${c.who?`<div class="mb">${esc(c.who)}</div>`:''}</div>`
-             :`<div class="face front"><div class="mark">?</div></div>`;
-    return `<button type="button" class="card ${up?'up':''}" data-k="${k}" ${up?'disabled':''} aria-label="${c.no}번 카드${up?' (사용함)':''}"><div class="ci"><div class="face back"><span class="no">${c.no}</span></div>${face}</div></button>`}).join('');
+    const idx=`<span class="idx">${c.no}</span><span class="idx br">${c.no}</span>`;
+    const who=c.by!=null?`<div class="nm">${esc(S.names[c.by])}</div>${c.who?`<div class="mb">${esc(c.who)}</div>`:''}`:'';
+    const face=c.state==='right'?`<div class="face front ok">${idx}<div class="mark">✓</div><div class="tag">정답</div>${who}</div>`
+             :c.state==='wrong'?`<div class="face front no">${idx}<div class="mark">✕</div><div class="tag">오답</div>${who}</div>`
+             :`<div class="face front">${idx}<div class="mark">?</div><div class="tag">문제</div></div>`;
+    return `<button type="button" class="card ${up?'up':''}" data-k="${k}" ${up?'disabled':''} aria-label="${c.no}번 카드${up?' (사용함)':''}"><div class="ci">${backHTML(c.no)}${face}</div></button>`}).join('');
   $('#cards').querySelectorAll('.card').forEach(b=>b.onclick=()=>openCard(+b.dataset.k));
   if(isOver())showResult();
 }
-/* 카드 섞기 애니메이션: 가운데로 모으기 → 좌우로 나눠 두 번 섞기 → 한 장씩 제자리로 나눠 주기 */
+/* 카드 섞기 애니메이션 (리플 셔플)
+   ① 판 위 카드를 가운데로 모으기 → ② 반으로 나눠 양쪽으로 기울여 들기 →
+   ③ 좌우에서 한 장씩 번갈아 떨어뜨려 합치기(2회) → ④ 모서리 맞추기 → ⑤ 한 장씩 살짝 떠올라 제자리로 */
 function dealAnim(){
   S.needDeal=false;
   const box=$('#cards');const cards=[...box.querySelectorAll('.card')];
   if(!cards.length||reduce||!cards[0].animate)return;
   const br=box.getBoundingClientRect();
   if(!br.width)return;
-  const cx=br.left+br.width/2, cy=br.top+Math.min(br.height/2,br.width*.18+80);
-  const n=cards.length, half=Math.min(br.width*.22,140);
-  const SH=1500, STEP=Math.max(45,Math.min(110,1400/n)), DD=420;
+  const n=cards.length;
+  const cx=br.left+br.width/2, cy=br.top+Math.min(br.height/2,br.width*.2+90);
+  const W=Math.min(br.width*.2,140);              // 반쪽 더미가 벌어지는 거리
+  const dt=Math.max(22,Math.min(38,520/n));        // 한 장씩 떨어지는 간격
+  const STEP=Math.max(55,Math.min(95,1100/n));     // 나눠 주는 간격
+  const DD=520;                                    // 한 장이 날아가는 시간
+  const RIFFLES=2;
+  // 시간표 계산
+  const G=380;                                     // 모으기
+  const R=[];let t=G+120;
+  for(let k=0;k<RIFFLES;k++){const split=t, drop0=split+300, square=drop0+n*dt+180;R.push({split,drop0,square});t=square+260}
+  const D0=t+120;
+  const total=D0+(n-1)*STEP+DD;
+  const rnd=(a)=>((Math.random()*2-1)*a);
   S.dealing=true;$('#hint').textContent='카드를 섞는 중…';
   if(S.autoRead)speak('카드를 섞습니다');
-  let last=null;
   cards.forEach((c,i)=>{
     const r=c.getBoundingClientRect();
     const dx=cx-(r.left+r.width/2), dy=cy-(r.top+r.height/2);
-    const side=i%2?1:-1, j=()=>((Math.random()-.5)*7).toFixed(1);
-    const lift=-(n-i)*.6;                     // 쌓인 두께
-    const at=(x,y,rot)=>`translate(${(dx+x).toFixed(1)}px,${(dy+y).toFixed(1)}px) rotate(${rot}deg)`;
-    const start=SH+i*STEP, T=start+DD;
-    const back1=520+Math.floor(i/2)*Math.min(18,200/n), back2=1080+Math.floor(i/2)*Math.min(18,200/n);
-    const o=t=>Math.min(t/T,.999);
-    c.style.zIndex=String(n-i+5);
-    last=c.animate([
-      {transform:at(0,lift,j()),offset:0},
-      {transform:at(side*half,lift-6,side*12),offset:o(260),easing:'ease-in-out'},
-      {transform:at(0,lift,j()),offset:o(back1),easing:'ease-out'},
-      {transform:at(-side*half*.8,lift-6,-side*10),offset:o(back1+300),easing:'ease-in-out'},
-      {transform:at(0,lift,0),offset:o(Math.max(back2,back1+560)),easing:'ease-out'},
-      {transform:at(0,lift,0),offset:o(start),easing:'cubic-bezier(.2,.8,.25,1)'},
-      {transform:'translate(0,0) rotate(0deg)',offset:1}
-    ],{duration:T,fill:'backwards'});
-    last.onfinish=()=>{c.style.zIndex=''};
+    const h=-(n-1-i)*.45;                          // 더미 두께
+    const T=(x,y,rot,sc=1)=>`translate(${(dx+x).toFixed(1)}px,${(dy+y+h).toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${sc})`;
+    const K=[];
+    const add=(time,transform,easing)=>K.push({time,transform,easing});
+    add(0,'translate(0px,0px) rotate(0deg) scale(1)','cubic-bezier(.45,.05,.25,1)');
+    add(G+i*6,T(rnd(1.5),0,rnd(2)),'linear');
+    R.forEach((q,k)=>{
+      const side=((i+k)%2)?1:-1;                   // 번갈아 양쪽 더미로
+      const hold=T(side*W,-6+side*2,side*-7,1.02);
+      add(q.split,T(rnd(1),0,rnd(1.5)),'cubic-bezier(.3,.1,.2,1)');
+      add(q.split+260,hold,'linear');
+      const drop=q.drop0+i*dt;
+      add(drop,hold,'cubic-bezier(.5,0,.75,.4)');  // 떨어지기 시작
+      add(drop+130,T(rnd(3),0,rnd(4)),'ease-out');
+      add(q.square,T(rnd(1),0,rnd(1.2)),'cubic-bezier(.3,.1,.2,1)');
+      add(q.square+160,T(0,0,0),'linear');
+    });
+    const st=D0+i*STEP;
+    const lift=-(18+Math.min(30,Math.hypot(dx,dy)*.06));
+    add(st,T(0,0,0),'cubic-bezier(.25,.6,.35,1)');
+    add(st+DD*.45,`translate(${(dx*.45).toFixed(1)}px,${(dy*.45+lift).toFixed(1)}px) rotate(${(dx>0?-6:6)}deg) scale(1.07)`,'cubic-bezier(.2,.7,.25,1)');
+    add(st+DD,'translate(0px,0px) rotate(0deg) scale(1)','linear');
+    const dur=st+DD;
+    const frames=K.map(f=>({transform:f.transform,offset:Math.min(1,f.time/dur),easing:f.easing}));
+    frames[frames.length-1].offset=1;
+    for(let j=1;j<frames.length;j++)if(frames[j].offset<frames[j-1].offset)frames[j].offset=frames[j-1].offset;
+    c.style.zIndex=String(1000-i);
+    const an=c.animate(frames,{duration:dur,fill:'backwards'});
+    // 나눠 줄 때는 맨 위 카드가 가장 위에 보이도록, 도착하면 원래대로
+    an.onfinish=()=>{c.style.zIndex=''};
   });
-  const total=SH+(n-1)*STEP+DD;
-  setTimeout(()=>{S.dealing=false;$('#hint').textContent='카드를 한 장 골라 뒤집으세요'},total+50);
+  setTimeout(()=>{S.dealing=false;$('#hint').textContent='카드를 한 장 골라 뒤집으세요'},total+60);
 }
 const isOver=()=>S.deck.length>0&&S.deck.every(c=>c.state!=='down');
 function openCard(k){
@@ -679,6 +757,21 @@ function renderSheet(){
 ['pType','pScope','pTitle','pAns','pLines','pName'].forEach(id=>$('#'+id).addEventListener('input',renderSheet));
 $('#doPrint').onclick=()=>{renderSheet();window.print()};
 $('#copyText').onclick=()=>{const items=printItems();copy(($('#pTitle').value||'카드 퀴즈 문제')+'\n\n'+items.map((x,i)=>`${i+1}. ${x.q}`+($('#pAns').checked?`\n   정답: ${x.a}`:'')).join('\n'))};
+
+/* ---------- 카드 디자인 ---------- */
+const DECKS=[['classic','클래식 네이비'],['burgundy','버건디'],['emerald','에메랄드'],['charcoal','차콜 실버'],['minimal','미니멀'],['hanji','한지 인장']];
+S.design=store.get('design','classic');if(!DECKS.some(d=>d[0]===S.design))S.design='classic';
+const backHTML=no=>`<div class="face back"><span class="pip tl">◆</span><span class="pip br">◆</span><span class="no"><span>${no}</span></span></div>`;
+function applyDeck(){
+  document.body.dataset.deck=S.design;store.set('design',S.design);
+  $('#decks').querySelectorAll('.deck-opt').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===S.design));
+  $('#deckSel').value=S.design;
+}
+$('#decks').innerHTML=DECKS.map(([id,nm],k)=>`<button type="button" class="deck-opt" data-id="${id}" data-deck="${id}" aria-pressed="false"><div class="mini">${backHTML(k+1)}</div>${nm}</button>`).join('');
+$('#decks').querySelectorAll('.deck-opt').forEach(b=>b.onclick=()=>{S.design=b.dataset.id;applyDeck()});
+$('#deckSel').innerHTML=DECKS.map(([id,nm])=>`<option value="${id}">${nm}</option>`).join('');
+$('#deckSel').onchange=e=>{S.design=e.target.value;applyDeck()};
+applyDeck();
 
 /* ---------- 시작 ---------- */
 applyScale();showRate();renderNames();refreshCounts();
