@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>가위바위보 카드 퀴즈</title>
+<title>카드 뒤집기 퀴즈</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -93,27 +93,6 @@ textarea{resize:vertical}
 .table{background:radial-gradient(120% 90% at 50% 0%,var(--felt) 0%,var(--felt-2) 100%);border-radius:1rem;padding:1.25rem;color:#f4efe0;box-shadow:inset 0 0 0 6px rgba(0,0,0,.12)}
 .table h3{font-size:1.3rem}
 
-/* 가위바위보 */
-.rps-status{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline}
-.rps-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr));gap:1rem;margin-top:1rem}
-.rps-p{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:.8rem;padding:.9rem;display:flex;flex-direction:column;gap:.6rem;align-items:center;text-align:center}
-.rps-p .nm{font-family:var(--display);font-size:1.25rem;display:flex;align-items:center;gap:.4rem}
-.hand{font-size:3.2rem;line-height:1;height:3.6rem;display:grid;place-items:center}
-.hand.shake{animation:shake .45s ease-in-out infinite}
-@keyframes shake{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-.6rem) rotate(-12deg)}}
-.picks{display:flex;gap:.35rem}
-.picks button{width:3rem;height:3rem;border-radius:.6rem;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.15);font-size:1.5rem;cursor:pointer}
-.picks button[aria-pressed=true]{border-color:var(--brass);background:rgba(227,162,58,.25)}
-.picks.hidden-pick button[aria-pressed=true]{background:rgba(255,255,255,.18)}
-.rps-p.win{border-color:var(--brass);box-shadow:0 0 0 3px rgba(227,162,58,.35)}
-.rps-p.lose{opacity:.6}
-.call{font-family:var(--display);font-size:2.6rem;text-align:center;min-height:3.4rem;color:var(--brass)}
-.waiting{display:flex;flex-wrap:wrap;gap:.4rem}
-.chip{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .65rem;border-radius:999px;background:rgba(255,255,255,.1);font-size:.9rem}
-.order-list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.6rem}
-.order-list li{display:flex;align-items:center;gap:.5rem;background:var(--card);color:var(--card-ink);border-radius:.6rem;padding:.45rem .85rem;font-weight:700}
-.order-list li b{font-family:var(--display);font-weight:400;color:var(--bad);font-size:1.2rem;font-variant-numeric:tabular-nums}
-
 /* 카드 게임 */
 .game{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:1.25rem;align-items:start}
 @media (max-width:760px){.game{grid-template-columns:1fr}}
@@ -125,7 +104,7 @@ textarea{resize:vertical}
 .turn-banner{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;margin-bottom:1rem}
 .turn-banner .who{font-family:var(--display);font-size:1.5rem}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(4.8rem,13vw,7.5rem),1fr));gap:.8rem}
-.card{aspect-ratio:3/4;perspective:900px;border:0;padding:0;background:none;cursor:pointer;max-width:100%}
+.card{position:relative;aspect-ratio:3/4;perspective:900px;border:0;padding:0;background:none;cursor:pointer;max-width:100%}
 .card:disabled{cursor:default}
 .ci{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.3,.7,.3,1.2);transform-style:preserve-3d}
 .card.up .ci{transform:rotateY(180deg)}
@@ -204,7 +183,7 @@ textarea{resize:vertical}
 
 <header class="top">
   <div class="wrap">
-    <h1><span class="suit" aria-hidden="true">♥</span>가위바위보 카드 퀴즈</h1>
+    <h1><span class="suit" aria-hidden="true">♥</span>카드 뒤집기 퀴즈</h1>
     <div class="tools">
       <div class="tool" role="group" aria-label="글자 크기">
         <span>글자</span>
@@ -225,10 +204,9 @@ textarea{resize:vertical}
 <nav class="tabs" aria-label="단계">
   <div class="wrap" role="tablist">
     <button type="button" role="tab" data-tab="setup" aria-selected="true"><span class="n">1</span>참가자·문항</button>
-    <button type="button" role="tab" data-tab="rps" aria-selected="false"><span class="n">2</span>가위바위보</button>
-    <button type="button" role="tab" data-tab="game" aria-selected="false"><span class="n">3</span>카드 게임</button>
-    <button type="button" role="tab" data-tab="edit" aria-selected="false"><span class="n">4</span>문제 편집</button>
-    <button type="button" role="tab" data-tab="print" aria-selected="false"><span class="n">5</span>출력</button>
+    <button type="button" role="tab" data-tab="game" aria-selected="false"><span class="n">2</span>카드 게임</button>
+    <button type="button" role="tab" data-tab="edit" aria-selected="false"><span class="n">3</span>문제 편집</button>
+    <button type="button" role="tab" data-tab="print" aria-selected="false"><span class="n">4</span>출력</button>
   </div>
 </nav>
 
@@ -266,33 +244,8 @@ textarea{resize:vertical}
     </div>
   </div>
   <div class="row">
-    <button type="button" class="btn primary big" id="goRps">가위바위보로 순서 정하기 →</button>
-    <button type="button" class="btn" id="goDirect">입력한 순서대로 바로 시작</button>
-  </div>
-</section>
-
-<!-- 2. 가위바위보 -->
-<section class="panel" id="tab-rps" hidden>
-  <div class="table">
-    <div class="rps-status">
-      <h3 id="rpsTitle">가위바위보로 차례 정하기</h3>
-      <span id="rpsSub" class="small" style="opacity:.85"></span>
-    </div>
-    <div class="call" id="rpsCall" aria-live="polite"></div>
-    <div class="rps-players" id="rpsPlayers"></div>
-    <div class="row" style="margin-top:1.25rem;justify-content:center" id="rpsBtns">
-      <label class="check" style="color:#f4efe0"><input type="checkbox" id="hidePicks" checked><span>낸 것 가리기</span></label>
-      <button type="button" class="btn" id="rpsRandom">모두 무작위로 내기</button>
-      <button type="button" class="btn brass big" id="rpsPlay" disabled>가위 바위 보!</button>
-    </div>
-    <div style="margin-top:1.25rem">
-      <div class="small" style="opacity:.85;margin-bottom:.4rem">정해진 차례</div>
-      <ol class="order-list" id="rpsOrder"></ol>
-    </div>
-  </div>
-  <div class="row">
-    <button type="button" class="btn" id="rpsReset">처음부터 다시</button>
-    <button type="button" class="btn primary big" id="rpsStart" hidden>이 순서로 카드 게임 시작 →</button>
+    <button type="button" class="btn primary big" id="goDirect">카드 섞고 게임 시작 →</button>
+    <span class="muted small">차례는 위에 적은 순서대로 돌아갑니다.</span>
   </div>
 </section>
 
@@ -308,7 +261,7 @@ textarea{resize:vertical}
       <div class="turn-banner">
         <span class="small" style="opacity:.85">지금 차례</span>
         <span class="who" id="who">-</span>
-        <span class="small" style="opacity:.85;margin-left:auto">카드를 한 장 골라 뒤집으세요</span>
+        <span class="small" id="hint" style="opacity:.85;margin-left:auto">카드를 한 장 골라 뒤집으세요</span>
       </div>
       <div class="cards" id="cards"></div>
     </div>
@@ -435,7 +388,7 @@ const S={
   rate:store.get('rate',1),
   autoRead:store.get('autoRead',true),
   opts:store.get('opts',{shuffle:true,recover:false,timer:false,sec:30}),
-  order:null, groups:null, picks:{}, busy:false,
+  order:null, needDeal:false, dealing:false,
   deck:[], scores:[], turn:0, open:null, timerId:null
 };
 const saveBank=()=>{store.set('bank',S.bank);refreshCounts()};
@@ -446,12 +399,11 @@ function tab(name){
   document.querySelectorAll('section.panel').forEach(p=>p.hidden=p.id!=='tab-'+name);
   if(name==='edit')renderEditor();
   if(name==='print')renderSheet();
-  if(name==='game'&&!S.deck.length)startGame(S.order||S.names.map((_,i)=>i));
+  if(name==='game'&&!S.deck.length)startGame(S.names.map((_,i)=>i));
+  if(name==='game'&&S.needDeal)requestAnimationFrame(dealAnim);
   window.scrollTo({top:0});
 }
-document.querySelectorAll('nav.tabs [data-tab]').forEach(b=>b.onclick=()=>{
-  if(b.dataset.tab==='rps'&&!S.groups)initRps();
-  tab(b.dataset.tab)});
+document.querySelectorAll('nav.tabs [data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2200)}
 
@@ -487,7 +439,7 @@ function setCount(n){
   n=Math.max(2,Math.min(12,n));
   while(S.names.length<n)S.names.push((S.names.length+1)+'모둠');
   S.names.length=n;store.set('names',S.names);renderNames();
-  S.groups=null;S.order=null;S.deck=[];
+  S.order=null;S.deck=[];
 }
 $('#pUp').onclick=()=>setCount(S.names.length+1);
 $('#pDown').onclick=()=>setCount(S.names.length-1);
@@ -510,110 +462,7 @@ $('#optShuffle').checked=O.shuffle;$('#optRecover').checked=O.recover;$('#optTim
   O.shuffle=$('#optShuffle').checked;O.recover=$('#optRecover').checked;O.timer=$('#optTimer').checked;
   O.sec=Math.max(5,Math.min(300,+$('#timerSec').value||30));store.set('opts',O)});
 
-$('#goRps').onclick=()=>{initRps();tab('rps')};
-$('#goDirect').onclick=()=>{S.order=S.names.map((_,i)=>i);startGame(S.order);tab('game')};
-
-/* ---------- 2. 가위바위보 ---------- */
-const HAND={rock:'✊',paper:'✋',scissors:'✌️'};
-const HNAME={rock:'바위',paper:'보',scissors:'가위'};
-const BEATS={rock:'scissors',scissors:'paper',paper:'rock'};
-function initRps(){
-  S.groups=[S.names.map((_,i)=>i)];S.picks={};S.order=null;S.busy=false;S.lastResult=null;
-  $('#rpsCall').textContent='';renderRps();
-}
-const curGroup=()=>S.groups.find(g=>g.length>1);
-function placed(){
-  // 앞에서부터 이어서 확정된(1명짜리) 그룹들
-  const out=[];for(const g of S.groups){if(g.length===1)out.push(g[0]);else break}return out;
-}
-function renderRps(){
-  const g=curGroup();
-  const done=!g;
-  const pl=placed();
-  $('#rpsOrder').innerHTML=pl.length?pl.map((p,k)=>`<li><b>${k+1}</b><span class="dot" style="background:${COLORS[p%12]}"></span>${esc(S.names[p])}</li>`).join(''):'<li style="background:rgba(255,255,255,.1);color:#f4efe0;font-weight:400">아직 없음</li>';
-  $('#rpsStart').hidden=!done;
-  $('#rpsBtns').hidden=done;
-  if(done){
-    S.order=S.groups.flat();
-    $('#rpsTitle').textContent='차례가 모두 정해졌어요!';
-    $('#rpsSub').textContent='';
-    $('#rpsPlayers').innerHTML='';
-    if(!S.celebrated){S.celebrated=true;boom()}
-    return;
-  }
-  S.celebrated=false;
-  const startRank=S.groups.slice(0,S.groups.indexOf(g)).reduce((a,x)=>a+x.length,0)+1;
-  const endRank=startRank+g.length-1;
-  $('#rpsTitle').textContent=g.length===S.names.length?'모두 함께 가위바위보!':`${startRank}~${endRank}번째 차례 결정전`;
-  const others=S.names.map((_,i)=>i).filter(i=>!g.includes(i)&&!pl.includes(i));
-  $('#rpsSub').innerHTML=others.length?'기다리는 중: '+others.map(i=>esc(S.names[i])).join(', '):'';
-  const hide=$('#hidePicks').checked;
-  const R=S.lastResult;
-  $('#rpsPlayers').innerHTML=g.map(i=>{
-    const p=S.picks[i];
-    const show=R&&R.pick[i];
-    const cls=R&&R.win?(R.win.includes(i)?'win':'lose'):'';
-    return `<div class="rps-p ${cls}" data-i="${i}">
-      <div class="nm"><span class="dot" style="background:${COLORS[i%12]}"></span>${esc(S.names[i])}</div>
-      <div class="hand" aria-live="polite">${show?HAND[R.pick[i]]:(p?(hide?'🂠':HAND[p]):'…')}</div>
-      <div class="picks ${hide?'hidden-pick':''}">${['scissors','rock','paper'].map(k=>`<button type="button" data-k="${k}" aria-pressed="${p===k}" aria-label="${HNAME[k]}" title="${HNAME[k]}">${HAND[k]}</button>`).join('')}</div>
-    </div>`}).join('');
-  $('#rpsPlayers').querySelectorAll('.rps-p').forEach(card=>{
-    const i=+card.dataset.i;
-    card.querySelectorAll('.picks button').forEach(b=>b.onclick=()=>{if(S.busy)return;S.lastResult=null;S.picks[i]=b.dataset.k;renderRps()});
-  });
-  $('#rpsPlay').disabled=!g.every(i=>S.picks[i])||S.busy;
-}
-$('#hidePicks').onchange=renderRps;
-$('#rpsRandom').onclick=()=>{if(S.busy)return;const g=curGroup();if(!g)return;S.lastResult=null;const ks=['rock','paper','scissors'];g.forEach(i=>S.picks[i]=ks[Math.floor(Math.random()*3)]);renderRps()};
-$('#rpsReset').onclick=()=>{initRps()};
-$('#rpsPlay').onclick=()=>{
-  const g=curGroup();if(!g||S.busy)return;
-  S.busy=true;$('#rpsPlay').disabled=true;
-  const hands=[...document.querySelectorAll('#rpsPlayers .hand')];
-  hands.forEach(h=>{h.textContent='✊';h.classList.add('shake')});
-  if(S.autoRead)speak('가위 바위 보');
-  const words=['가위!','바위!','보!'];let k=0;
-  const call=$('#rpsCall');call.textContent=words[0];
-  const iv=setInterval(()=>{k++;if(k<3){call.textContent=words[k];return}
-    clearInterval(iv);resolveRps(g)},520);
-};
-function resolveRps(g){
-  const pick={};g.forEach(i=>pick[i]=S.picks[i]);
-  const kinds=[...new Set(g.map(i=>pick[i]))];
-  S.busy=false;
-  if(kinds.length!==2){
-    S.lastResult={pick,win:null};
-    $('#rpsCall').textContent=kinds.length===1?'비겼어요! 다시':'세 가지가 다 나왔어요! 다시';
-    g.forEach(i=>delete S.picks[i]);
-  }else{
-    const [a,b]=kinds;const w=BEATS[a]===b?a:b;
-    const win=g.filter(i=>pick[i]===w),lose=g.filter(i=>pick[i]!==w);
-    S.lastResult={pick,win};
-    $('#rpsCall').textContent=`${HNAME[w]} 승리!`;
-    const idx=S.groups.indexOf(g);
-    S.groups.splice(idx,1,win,lose);
-    g.forEach(i=>delete S.picks[i]);
-    // 결과를 잠깐 보여 준 뒤 다음 결정전으로
-    renderRpsResult(g);
-    setTimeout(()=>{S.lastResult=null;$('#rpsCall').textContent='';renderRps()},1600);
-    return;
-  }
-  renderRpsResult(g);
-}
-function renderRpsResult(g){
-  // 현재 그룹 카드에 결과 표시(그룹 구조가 바뀌어도 방금 대결한 사람들 기준)
-  const R=S.lastResult;
-  $('#rpsPlayers').querySelectorAll('.rps-p').forEach(card=>{
-    const i=+card.dataset.i;const h=card.querySelector('.hand');
-    h.classList.remove('shake');h.textContent=HAND[R.pick[i]];
-    card.classList.toggle('win',!!(R.win&&R.win.includes(i)));
-    card.classList.toggle('lose',!!(R.win&&!R.win.includes(i)));
-    card.querySelectorAll('.picks button').forEach(b=>b.setAttribute('aria-pressed','false'));
-  });
-  if(!R.win)$('#rpsPlay').disabled=true;
-}
-$('#rpsStart').onclick=()=>{startGame(S.order);tab('game')};
+$('#goDirect').onclick=()=>{startGame(S.names.map((_,i)=>i));tab('game')};
 
 /* ---------- 3. 카드 게임 ---------- */
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -625,7 +474,9 @@ function startGame(order){
   S.deck=qs.map((ref,k)=>({ref,no:k+1,state:'down',by:null}));
   S.scores=S.names.map(()=>0);S.turn=0;S.open=null;
   $('#result').hidden=true;
+  S.needDeal=true;
   renderGame();
+  if(!$('#tab-game').hidden)requestAnimationFrame(dealAnim);
 }
 function renderGame(){
   const cur=S.order[S.turn%S.order.length];
@@ -641,9 +492,46 @@ function renderGame(){
   $('#cards').querySelectorAll('.card').forEach(b=>b.onclick=()=>openCard(+b.dataset.k));
   if(isOver())showResult();
 }
+/* 카드 섞기 애니메이션: 가운데로 모으기 → 좌우로 나눠 두 번 섞기 → 한 장씩 제자리로 나눠 주기 */
+function dealAnim(){
+  S.needDeal=false;
+  const box=$('#cards');const cards=[...box.querySelectorAll('.card')];
+  if(!cards.length||reduce||!cards[0].animate)return;
+  const br=box.getBoundingClientRect();
+  if(!br.width)return;
+  const cx=br.left+br.width/2, cy=br.top+Math.min(br.height/2,br.width*.18+80);
+  const n=cards.length, half=Math.min(br.width*.22,140);
+  const SH=1500, STEP=Math.max(45,Math.min(110,1400/n)), DD=420;
+  S.dealing=true;$('#hint').textContent='카드를 섞는 중…';
+  if(S.autoRead)speak('카드를 섞습니다');
+  let last=null;
+  cards.forEach((c,i)=>{
+    const r=c.getBoundingClientRect();
+    const dx=cx-(r.left+r.width/2), dy=cy-(r.top+r.height/2);
+    const side=i%2?1:-1, j=()=>((Math.random()-.5)*7).toFixed(1);
+    const lift=-(n-i)*.6;                     // 쌓인 두께
+    const at=(x,y,rot)=>`translate(${(dx+x).toFixed(1)}px,${(dy+y).toFixed(1)}px) rotate(${rot}deg)`;
+    const start=SH+i*STEP, T=start+DD;
+    const back1=520+Math.floor(i/2)*Math.min(18,200/n), back2=1080+Math.floor(i/2)*Math.min(18,200/n);
+    const o=t=>Math.min(t/T,.999);
+    c.style.zIndex=String(n-i+5);
+    last=c.animate([
+      {transform:at(0,lift,j()),offset:0},
+      {transform:at(side*half,lift-6,side*12),offset:o(260),easing:'ease-in-out'},
+      {transform:at(0,lift,j()),offset:o(back1),easing:'ease-out'},
+      {transform:at(-side*half*.8,lift-6,-side*10),offset:o(back1+300),easing:'ease-in-out'},
+      {transform:at(0,lift,0),offset:o(Math.max(back2,back1+560)),easing:'ease-out'},
+      {transform:at(0,lift,0),offset:o(start),easing:'cubic-bezier(.2,.8,.25,1)'},
+      {transform:'translate(0,0) rotate(0deg)',offset:1}
+    ],{duration:T,fill:'backwards'});
+    last.onfinish=()=>{c.style.zIndex=''};
+  });
+  const total=SH+(n-1)*STEP+DD;
+  setTimeout(()=>{S.dealing=false;$('#hint').textContent='카드를 한 장 골라 뒤집으세요'},total+50);
+}
 const isOver=()=>S.deck.length>0&&S.deck.every(c=>c.state!=='down');
 function openCard(k){
-  const c=S.deck[k];if(!c||c.state!=='down'||S.open!=null)return;
+  const c=S.deck[k];if(!c||c.state!=='down'||S.open!=null||S.dealing)return;
   S.open=k;
   const btn=$(`#cards .card[data-k="${k}"]`);btn.classList.add('up');
   const cur=S.order[S.turn%S.order.length];
@@ -679,7 +567,7 @@ $('#qRight').onclick=()=>judge(true);
 $('#qWrong').onclick=()=>judge(false);
 $('#qCancel').onclick=()=>{closeQ();renderGame()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden){closeQ();renderGame()}});
-$('#redeal').onclick=()=>{startGame(S.order||S.names.map((_,i)=>i));toast('카드를 새로 섞었어요')};
+$('#redeal').onclick=()=>{if(S.dealing)return;closeQ();startGame(S.order||S.names.map((_,i)=>i))};
 $('#skipTurn').onclick=()=>{if(isOver())return;S.turn++;renderGame()};
 function showResult(){
   const ranked=S.order.slice().sort((a,b)=>S.scores[b]-S.scores[a]);
