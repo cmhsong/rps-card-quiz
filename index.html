@@ -83,8 +83,16 @@ section.panel{display:flex;flex-direction:column;gap:1.25rem}
 .field>span{font-size:.8rem;letter-spacing:.04em;color:var(--muted);font-weight:700}
 input[type=text],input[type=number],textarea,select{border:1px solid var(--line);background:var(--paper);border-radius:.45rem;padding:.5rem .65rem;width:100%}
 textarea{resize:vertical}
-.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,11rem),1fr));gap:.6rem}
-.names label{display:flex;align-items:center;gap:.45rem}
+.names{display:flex;flex-direction:column;gap:.7rem}
+.grp{border:1px solid var(--line);border-radius:.6rem;padding:.7rem;display:flex;flex-direction:column;gap:.55rem;background:var(--paper)}
+.grp-hd{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
+.grp-hd input{flex:1 1 8rem;min-width:0;font-weight:700;background:var(--surface)}
+.stepper.sm button{width:2.1rem;height:2.1rem;font-size:1rem}
+.stepper.sm output{min-width:2.2rem;font-size:1.15rem}
+.mems{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,6.5rem),1fr));gap:.4rem}
+.mems input{padding:.3rem .5rem;font-size:.9rem;background:var(--surface)}
+.score li .mb{display:block;font-size:.75rem;color:var(--muted)}
+.front .mb{font-size:.7rem;color:#5d6d67}
 .dot{flex:none;width:.85rem;height:.85rem;border-radius:50%}
 .check{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer}
 .check input{width:1.15rem;height:1.15rem;margin-top:.25rem;accent-color:var(--felt)}
@@ -216,15 +224,16 @@ textarea{resize:vertical}
 <section class="panel" id="tab-setup">
   <div class="grid2">
     <div class="box" style="display:flex;flex-direction:column;gap:1rem">
-      <h2>참가자</h2>
+      <h2>모둠과 참가자</h2>
       <div class="row">
         <div class="stepper">
-          <button type="button" id="pDown" aria-label="참가자 줄이기">−</button>
+          <button type="button" id="pDown" aria-label="모둠 줄이기">−</button>
           <output id="pCount">4</output>
-          <button type="button" id="pUp" aria-label="참가자 늘리기">+</button>
+          <button type="button" id="pUp" aria-label="모둠 늘리기">+</button>
         </div>
-        <span class="muted">명(모둠) · 2~12</span>
+        <span class="muted">모둠 · 1~12 / 전체 <b id="pTotal">4</b>명</span>
       </div>
+      <p class="small muted" style="margin:0">모둠마다 인원(1~12명)을 정하고 참가자 이름을 입력하세요. 차례는 모둠 순서대로 돌고, 같은 모둠 안에서는 모둠원이 번갈아 풉니다. 혼자 하려면 모둠 1개, 인원 1명으로 두세요.</p>
       <div class="names" id="names"></div>
     </div>
     <div class="box" style="display:flex;flex-direction:column;gap:1rem">
@@ -382,6 +391,8 @@ const SAMPLE=[
 
 const S={
   names:store.get('names',['1모둠','2모둠','3모둠','4모둠']),
+  members:store.get('members',[]),
+  mturn:[],
   bank:store.get('bank',null)||SAMPLE.map(x=>({...x})),
   qCount:store.get('qCount',12),
   scale:store.get('scale',1),
@@ -430,13 +441,32 @@ function speak(text){
 const stopSpeak=()=>{if('speechSynthesis' in window)speechSynthesis.cancel()};
 
 /* ---------- 1. 설정 ---------- */
+function mem(i){if(!Array.isArray(S.members[i])||!S.members[i].length)S.members[i]=[''];return S.members[i]}
+function memberOf(g){const m=mem(g);const k=(S.mturn[g]||0)%m.length;return (m[k]||'').trim()||(m.length>1?(k+1)+'번':'')}
+function curP(){const g=S.order[S.turn%S.order.length];return {g,m:memberOf(g)}}
+const label=P=>esc(S.names[P.g]??'-')+(P.m?` <span style="opacity:.8;font-size:.85em">· ${esc(P.m)}</span>`:'');
+function advance(){const g=S.order[S.turn%S.order.length];S.mturn[g]=(S.mturn[g]||0)+1;S.turn++}
 function renderNames(){
   $('#pCount').textContent=S.names.length;
-  $('#names').innerHTML=S.names.map((n,i)=>`<label><span class="dot" style="background:${COLORS[i%12]}"></span><input type="text" id="name${i}" data-i="${i}" value="${esc(n)}" aria-label="${i+1}번 참가자 이름"></label>`).join('');
-  $('#names').querySelectorAll('input').forEach(inp=>inp.oninput=()=>{S.names[+inp.dataset.i]=inp.value;store.set('names',S.names)});
+  S.members.length=S.names.length;
+  $('#pTotal').textContent=S.names.reduce((a,_,i)=>a+mem(i).length,0);
+  $('#names').innerHTML=S.names.map((n,i)=>{const m=mem(i);return `<div class="grp" data-i="${i}">
+    <div class="grp-hd"><span class="dot" style="background:${COLORS[i%12]}"></span>
+      <input type="text" id="name${i}" data-role="g" value="${esc(n)}" aria-label="${i+1}번째 모둠 이름">
+      <div class="stepper sm"><button type="button" data-role="mdown" aria-label="${esc(n)} 인원 줄이기">−</button><output>${m.length}</output><button type="button" data-role="mup" aria-label="${esc(n)} 인원 늘리기">+</button></div>
+      <span class="muted small">명</span></div>
+    <div class="mems">${m.map((x,k)=>`<input type="text" id="m${i}_${k}" data-k="${k}" value="${esc(x)}" placeholder="${k+1}번 이름" aria-label="${esc(n)} ${k+1}번째 사람 이름">`).join('')}</div></div>`}).join('');
+  $('#names').querySelectorAll('.grp').forEach(gr=>{
+    const i=+gr.dataset.i;
+    gr.querySelector('[data-role=g]').oninput=e=>{S.names[i]=e.target.value;store.set('names',S.names)};
+    gr.querySelectorAll('.mems input').forEach(inp=>inp.oninput=()=>{mem(i)[+inp.dataset.k]=inp.value;store.set('members',S.members)});
+    const setM=d=>{const m=mem(i);const n=Math.max(1,Math.min(12,m.length+d));while(m.length<n)m.push('');m.length=n;store.set('members',S.members);S.deck=[];renderNames()};
+    gr.querySelector('[data-role=mup]').onclick=()=>setM(1);
+    gr.querySelector('[data-role=mdown]').onclick=()=>setM(-1);
+  });
 }
 function setCount(n){
-  n=Math.max(2,Math.min(12,n));
+  n=Math.max(1,Math.min(12,n));
   while(S.names.length<n)S.names.push((S.names.length+1)+'모둠');
   S.names.length=n;store.set('names',S.names);renderNames();
   S.order=null;S.deck=[];
@@ -472,21 +502,21 @@ function startGame(order){
   if(O.shuffle)qs=shuffle(qs);
   qs=qs.slice(0,S.qCount);
   S.deck=qs.map((ref,k)=>({ref,no:k+1,state:'down',by:null}));
-  S.scores=S.names.map(()=>0);S.turn=0;S.open=null;
+  S.scores=S.names.map(()=>0);S.mturn=S.names.map(()=>0);S.turn=0;S.open=null;
   $('#result').hidden=true;
   S.needDeal=true;
   renderGame();
   if(!$('#tab-game').hidden)requestAnimationFrame(dealAnim);
 }
 function renderGame(){
-  const cur=S.order[S.turn%S.order.length];
-  $('#who').innerHTML=`<span class="dot" style="background:${COLORS[cur%12]};display:inline-block;margin-right:.4rem"></span>${esc(S.names[cur]??'-')}`;
-  $('#score').innerHTML=S.order.map((p,k)=>`<li class="${p===cur&&!isOver()?'now':''}"><span class="tn">${k+1}</span><span class="dot" style="background:${COLORS[p%12]}"></span><span>${esc(S.names[p])}</span><span class="s">${S.scores[p]}</span></li>`).join('');
+  const P=curP(),cur=P.g;
+  $('#who').innerHTML=`<span class="dot" style="background:${COLORS[cur%12]};display:inline-block;margin-right:.4rem"></span>${label(P)}`;
+  $('#score').innerHTML=S.order.map((p,k)=>{const nx=memberOf(p);return `<li class="${p===cur&&!isOver()?'now':''}"><span class="tn">${k+1}</span><span class="dot" style="background:${COLORS[p%12]}"></span><span>${esc(S.names[p])}${nx?`<span class="mb">${p===cur?'지금':'다음'}: ${esc(nx)}</span>`:''}</span><span class="s">${S.scores[p]}</span></li>`}).join('');
   $('#left').textContent=S.deck.filter(c=>c.state==='down').length;
   $('#cards').innerHTML=S.deck.map((c,k)=>{
     const up=c.state!=='down';
-    const face=c.state==='right'?`<div class="face front ok"><div class="mark">○</div><div>${esc(S.names[c.by])}</div></div>`
-             :c.state==='wrong'?`<div class="face front no"><div class="mark">✕</div><div>${esc(S.names[c.by])}</div></div>`
+    const face=c.state==='right'?`<div class="face front ok"><div class="mark">○</div><div>${esc(S.names[c.by])}</div>${c.who?`<div class="mb">${esc(c.who)}</div>`:''}</div>`
+             :c.state==='wrong'?`<div class="face front no"><div class="mark">✕</div><div>${esc(S.names[c.by])}</div>${c.who?`<div class="mb">${esc(c.who)}</div>`:''}</div>`
              :`<div class="face front"><div class="mark">?</div></div>`;
     return `<button type="button" class="card ${up?'up':''}" data-k="${k}" ${up?'disabled':''} aria-label="${c.no}번 카드${up?' (사용함)':''}"><div class="ci"><div class="face back"><span class="no">${c.no}</span></div>${face}</div></button>`}).join('');
   $('#cards').querySelectorAll('.card').forEach(b=>b.onclick=()=>openCard(+b.dataset.k));
@@ -534,9 +564,9 @@ function openCard(k){
   const c=S.deck[k];if(!c||c.state!=='down'||S.open!=null||S.dealing)return;
   S.open=k;
   const btn=$(`#cards .card[data-k="${k}"]`);btn.classList.add('up');
-  const cur=S.order[S.turn%S.order.length];
+  const P=curP();
   setTimeout(()=>{
-    $('#qNo').textContent=c.no;$('#qWho').textContent=S.names[cur];
+    $('#qNo').textContent=c.no;$('#qWho').textContent=S.names[P.g]+(P.m?' · '+P.m:'');
     $('#qText').textContent=c.ref.q;$('#qAns').textContent=c.ref.a||'(정답 없음)';$('#qAns').hidden=true;
     $('#overlay').hidden=false;$('#qShow').focus();
     if(S.autoRead)speak(c.ref.q);
@@ -557,18 +587,18 @@ $('#qStop').onclick=stopSpeak;
 $('#qShow').onclick=()=>{const c=S.deck[S.open];$('#qAns').hidden=false;if(S.autoRead&&c)speak('정답, '+(c.ref.a||''))};
 function judge(ok){
   const c=S.deck[S.open];if(!c)return;
-  const cur=S.order[S.turn%S.order.length];
-  if(ok){S.scores[cur]++;c.state='right';c.by=cur;smallBoom()}
+  const P=curP(),cur=P.g;
+  if(ok){S.scores[cur]++;c.state='right';c.by=cur;c.who=P.m;smallBoom()}
   else if(O.recover){c.state='down'}
-  else{c.state='wrong';c.by=cur}
-  closeQ();S.turn++;renderGame();
+  else{c.state='wrong';c.by=cur;c.who=P.m}
+  closeQ();advance();renderGame();
 }
 $('#qRight').onclick=()=>judge(true);
 $('#qWrong').onclick=()=>judge(false);
 $('#qCancel').onclick=()=>{closeQ();renderGame()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden){closeQ();renderGame()}});
 $('#redeal').onclick=()=>{if(S.dealing)return;closeQ();startGame(S.order||S.names.map((_,i)=>i))};
-$('#skipTurn').onclick=()=>{if(isOver())return;S.turn++;renderGame()};
+$('#skipTurn').onclick=()=>{if(isOver()||S.dealing)return;advance();renderGame()};
 function showResult(){
   const ranked=S.order.slice().sort((a,b)=>S.scores[b]-S.scores[a]);
   let rank=0,prev=null;
